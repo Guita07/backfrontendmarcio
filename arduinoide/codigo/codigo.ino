@@ -5,11 +5,11 @@
 // ============================
 // Rede e servidor
 // ============================
-const char* NOME_WIFI   = "seu_wifi";
-const char* SENHA_WIFI  = "sua senha";
+const char* NOME_WIFI   = "Pereira";
+const char* SENHA_WIFI  = "Gulupri3";
 
 // ⚠️ Somente o HOST, sem "http://"
-const char* SERVIDOR_WS = "192.168.1.11";   // "meuservidor.com" ou IP
+const char* SERVIDOR_WS = "backendmarcio.vercel.app";   // "meuservidor.com" ou IP
 const uint16_t PORTA_WS = 8080;
 const char* CAMINHO_WS  = "/?from=esp";
 
