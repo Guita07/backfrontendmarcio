@@ -14,7 +14,7 @@ wss.on("connection", (ws, req) => {
     // diferencia pela query: ws(s)://host:porta/?from=esp|site
     let role = "unknown"
     try {
-        const url = new URL(req.url, "frontendmarcio.vercel.app")
+        const url = new URL(req.url, "http://local")
         const from = (url.searchParams.get("from") || "").toLowerCase()
         if (from === "esp" || from === "site") role = from
     } catch { }

@@ -1,6 +1,6 @@
 // Produção (site HTTPS): "wss://SEU_BACKEND/?from=site"
 // Dev local:             "ws://localhost:8080/?from=site"
-const ENDERECO_WS = "wss://backendmarcio.vercel.app/?from=site"
+const ENDERECO_WS = "ws://localhost:8080/?from=site"
 
 const statusConexao = document.getElementById("status")
 const valorTemperatura = document.getElementById("temp")
@@ -40,7 +40,7 @@ function conectar() {
         try {
             const dados = JSON.parse(evento.data)
             if (typeof dados.temperatura === "number") valorTemperatura.textContent = dados.temperatura.toFixed(1) + " °C"
-            if (typeof dados.umidade === "number") valorUmidade.textContent = dados.umidade.toFixed(1) + " %"
+            if (typeof dados.valorUmidade === "number") valorUmidade.textContent = dados.umidade.toFixed(1) + " %"
         } catch { /* se a mensagem recebida não for JSON, mostramos apenas o texto */}
     }
 
