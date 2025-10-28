@@ -40,7 +40,7 @@ function conectar() {
         try {
             const dados = JSON.parse(evento.data)
             if (typeof dados.temperatura === "number") valorTemperatura.textContent = dados.temperatura.toFixed(1) + " °C"
-            if (typeof dados.valorUmidade === "number") valorUmidade.textContent = dados.umidade.toFixed(1) + " %"
+            if (typeof dados.umidade === "number") valorUmidade.textContent = dados.umidade.toFixed(1) + " %"
         } catch { /* se a mensagem recebida não for JSON, mostramos apenas o texto */}
     }
 
