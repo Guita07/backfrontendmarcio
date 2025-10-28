@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+    <script src="./script.js" defer></script>
+    <title>Document</title>
+</head>
+<body>
+  <h1>Leituras do ESP32 (WebSocket)</h1>
+
+  <div class="card">
+    <p>Status: <span id="status" class="bad">Desconectado</span></p>
+
+    <div class="row">
+      <div><b>Temperatura</b><div id="temp">--</div></div>
+      <div><b>Umidade</b><div id="umid">--</div></div>
+    </div>
+
+    <h3>Última mensagem recebida</h3>
+    <pre id="raw">—</pre>
+
+    <h3>Enviar JSON para o ESP</h3>
+    <div class="row">
+      <button id="btnOn">Enviar {"led":1}</button>
+      <button id="btnOff">Enviar {"led":0}</button>
+    </div>
+
+    <p>Ou escreva seu próprio JSON:</p>
+    <textarea id="jsonInput" rows="5">
+{
+  "led": 1,
+  "mensagem": "olá, esp"
+}
+    </textarea>
+    <div style="margin-top:8px">
+      <button id="btnEnviarJson">Enviar JSON</button>
+      <span id="erroJson" style="color:#a00;margin-left:8px"></span>
+    </div>
+  </div>
+</body>
+</html>

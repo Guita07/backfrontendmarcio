@@ -1,0 +1,48 @@
+body {
+    font-family: system-ui, sans-serif;
+    padding: 24px;
+}
+
+.card {
+    border: 1px solid #ddd;
+    border-radius: 12px;
+    padding: 16px;
+    max-width: 680px;
+}
+
+.row {
+    display: flex;
+    gap: 16px;
+    margin: 8px 0;
+}
+
+.row>div {
+    flex: 1;
+}
+
+.ok {
+    color: #0a0
+}
+
+.bad {
+    color: #a00
+}
+
+pre {
+    background: #f7f7f7;
+    padding: 12px;
+    border-radius: 8px;
+    overflow: auto;
+}
+
+textarea,
+input,
+button {
+    padding: 8px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+}
+
+textarea {
+    width: 100%;
+}
