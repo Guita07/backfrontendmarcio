@@ -1,27 +1,31 @@
 // Produção (site HTTPS): "wss://SEU_BACKEND/?from=site"
-// Dev local:             "ws://localhost:8080/?from=site **"
+// Dev local:             "ws://localhost:8080/?from=site"
 const ENDERECO_WS = "wss://unthronged-crinkly-meagan.ngrok-free.dev/?from=site"
 
 const statusConexao = document.getElementById("status")
-const valorTemperatura = document.getElementById("temp")
-const valorUmidade = document.getElementById("umid")
 const logMensagens = document.getElementById("raw")
-
-const botaoLigarLed = document.getElementById("btnOn")
-const botaoDesligarLed = document.getElementById("btnOff")
-const campoJson = document.getElementById("jsonInput")
-const botaoEnviarJson = document.getElementById("btnEnviarJson")
-const erroJson = document.getElementById("erroJson")
 
 let conexaoWs
 
-function atualizarUiConectado() {
-    statusConexao.textContent = "Conectado"
-    statusConexao.className = "ok"
+// Variáveis globais que serão acessadas pelo index.html
+window.dadosEsp32 = {
+    oculosConectado: true,
+    alertasAcidente: 0,
+    alertasSono: 0
 }
+
+function atualizarUiConectado() {
+    if (statusConexao) {
+        statusConexao.textContent = "Conectado"
+        statusConexao.className = "ok"
+    }
+}
+
 function atualizarUiDesconectado(texto = "Desconectado") {
-    statusConexao.textContent = texto
-    statusConexao.className = "bad"
+    if (statusConexao) {
+        statusConexao.textContent = texto
+        statusConexao.className = "bad"
+    }
 }
 
 function conectar() {
@@ -35,29 +39,33 @@ function conectar() {
     }
 
     conexaoWs.onmessage = (evento) => {
-        logMensagens.textContent = evento.data
+        if (logMensagens) {
+            logMensagens.textContent = evento.data
+        }
         console.log(evento.data)
+        
         try {
             const dados = JSON.parse(evento.data)
-            if (typeof dados.temperatura === "number") valorTemperatura.textContent = dados.temperatura.toFixed(1) + " °C"
-            if (typeof dados.umidade === "number") valorUmidade.textContent = dados.umidade.toFixed(1) + " %"
-        } catch { /* se a mensagem recebida não for JSON, mostramos apenas o texto */}
-    }
-
-    // envia JSONs prontos
-    botaoLigarLed.onclick = () => enviarObjetoJson({ led: 1 })
-    botaoDesligarLed.onclick = () => enviarObjetoJson({ led: 0 })
-
-    // envia JSON digitado
-    botaoEnviarJson.onclick = () => {
-        erroJson.textContent = ""
-        const texto = campoJson.value.trim()
-        if (!texto) return
-        try {
-            const objeto = JSON.parse(texto) // valida JSON do usuário
-            enviarObjetoJson(objeto)
-        } catch (e) {
-            erroJson.textContent = "JSON inválido"
+            
+            // Atualiza as variáveis importantes do ESP32
+            if (typeof dados.oculosConectado === "boolean") {
+                window.dadosEsp32.oculosConectado = dados.oculosConectado
+                console.log("Óculos conectado:", dados.oculosConectado)
+            }
+            
+            if (typeof dados.alertasAcidente === "number") {
+                window.dadosEsp32.alertasAcidente = dados.alertasAcidente
+                console.log("Alertas de acidente:", dados.alertasAcidente)
+            }
+            
+            if (typeof dados.alertasSono === "number") {
+                window.dadosEsp32.alertasSono = dados.alertasSono
+                console.log("Alertas de sono:", dados.alertasSono)
+            }
+            
+        } catch { 
+            // se a mensagem recebida não for JSON, apenas registra
+            console.log("Mensagem não-JSON recebida:", evento.data)
         }
     }
 }

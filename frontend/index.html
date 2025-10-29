@@ -1,43 +1,701 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="style.css">
-    <script src="./script.js" defer></script>
-    <title>Document</title>
-</head>
-<body>
-  <h1>Leituras do ESP32 (WebSocket)</h1>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Stayon</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        margin: 0;
+        padding: 20px;
+        background: linear-gradient(to right, #e5e6e6 0%, #dae3e5 100%);
+        font-family: "Nunito", sans-serif;
+        color: #333;
+        box-sizing: border-box;
+      }
 
-  <div class="card">
-    <p>Status: <span id="status" class="bad">Desconectado</span></p>
+      .cabecalho {
+        width: 100%;
+        max-width: 420px;
+        margin-bottom: 40px;
+        text-align: center;
+      }
 
-    <div class="row">
-      <div><b>Temperatura</b><div id="temp">--</div></div>
-      <div><b>Umidade</b><div id="umid">--</div></div>
+      .logo {
+        margin: 0;
+        font-size: 2.6em;
+        font-weight: 800;
+        color: #4a74ff;
+      }
+
+      .subtitulo {
+        margin-top: 5px;
+        font-size: 1em;
+        color: #6c757d;
+      }
+
+      .area-principal {
+        width: 100%;
+        max-width: 400px;
+        padding: 25px;
+        box-sizing: border-box;
+        background-color: #ffffff;
+        border: 1px solid #e0e0e0;
+        border-radius: 15px;
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.08);
+      }
+
+      .grade-botoes {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+      }
+
+      .botao-acao {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 25px 15px;
+        background-color: #ffffff;
+        border: 1px solid #dae3e5;
+        border-radius: 12px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        color: #2b7fff;
+        font-size: 1.1em;
+        font-weight: 700;
+        text-align: center;
+        cursor: pointer;
+        transition: transform 0.2s, box-shadow 0.2s;
+      }
+
+      .botao-acao:active {
+        transform: scale(0.97);
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        background-color: #f0f5ff;
+      }
+
+      .icone-botao {
+        margin-bottom: 5px;
+        font-size: 1.8em;
+      }
+
+      .fundo-escuro-popup {
+        position: fixed;
+        top: 0;
+        left: 0;
+        z-index: 1000;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(5px);
+      }
+
+      .janela-popup {
+        width: 350px;
+        max-width: 90%;
+        padding: 20px;
+        box-sizing: border-box;
+        background: #ffffff;
+        border-radius: 15px;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        text-align: center;
+      }
+
+      .janela-popup h2 {
+        margin-top: 0;
+        margin-bottom: 20px;
+        font-size: 1.6em;
+        color: #333;
+      }
+
+      .status-dispositivos {
+        display: flex;
+        justify-content: space-around;
+        gap: 15px;
+        margin: 25px 0;
+      }
+
+      .item-dispositivo {
+        flex: 1;
+        padding: 15px;
+        border-radius: 10px;
+      }
+
+      .item-dispositivo.conectado {
+        background-color: #eaf2ff;
+        border: 1px solid #2b7fff;
+      }
+
+      .item-dispositivo.desconectado {
+        background-color: #f0f2f3;
+        border: 1px solid #6c757d;
+      }
+
+      .nome-dispositivo {
+        margin-bottom: 5px;
+        font-weight: 700;
+        color: #333;
+      }
+
+      .texto-status {
+        font-size: 0.95em;
+        font-weight: 700;
+      }
+
+      .conectado .texto-status {
+        color: #2b7fff;
+      }
+
+      .desconectado .texto-status {
+        color: #6c757d;
+      }
+
+      .lista-de-rotas {
+        margin: 20px 0;
+        max-height: 300px;
+        overflow-y: auto;
+        text-align: left;
+      }
+
+      .item-da-rota {
+        margin-bottom: 10px;
+        padding: 15px;
+        background-color: #f8f9fa;
+        border-left: 4px solid #2b7fff;
+        border-radius: 8px;
+      }
+
+      .item-da-rota:last-child {
+        margin-bottom: 0;
+      }
+
+      .titulo-rota {
+        margin-bottom: 4px;
+        font-weight: 700;
+        color: #333;
+      }
+
+      .detalhes-da-rota {
+        font-size: 0.9em;
+        color: #666;
+      }
+
+      .info-da-rota-atual {
+        margin: 15px 0;
+        padding: 10px;
+        background-color: #f8f9fa;
+        border-radius: 10px;
+      }
+
+      .linha-dado {
+        display: flex;
+        justify-content: space-between;
+        padding: 8px 5px;
+        border-bottom: 1px solid #eee;
+      }
+
+      .linha-dado:last-child {
+        border-bottom: none;
+      }
+
+      .label-dado {
+        color: #666;
+      }
+
+      .valor-dado {
+        font-weight: 700;
+        color: #333;
+      }
+
+      .area-mapa {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        height: 120px;
+        margin: 15px 0;
+        background-color: #e0e0e0;
+        border-radius: 10px;
+        color: #777;
+        font-size: 1em;
+        font-weight: 700;
+      }
+
+      .botoes-popup-container {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        margin-top: 20px;
+      }
+
+      .botao-do-popup {
+        padding: 12px 25px;
+        border: none;
+        border-radius: 8px;
+        background-color: #2b7fff;
+        color: #ffffff;
+        font-size: 1em;
+        font-weight: 700;
+        cursor: pointer;
+        transition: background-color 0.2s;
+      }
+
+      .botao-do-popup.cancelar {
+        background-color: #6c757d;
+      }
+
+      .botao-do-popup:active {
+        filter: brightness(0.9);
+      }
+
+      .texto-confirmacao {
+        margin: 20px 0;
+        font-size: 1em;
+        line-height: 1.5;
+        color: #555;
+      }
+
+      @media (max-width: 400px) {
+        .area-principal,
+        .janela-popup {
+          padding: 10px;
+          max-width: 95%;
+        }
+        .botao-acao {
+          padding: 20px 10px;
+          font-size: 1em;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="cabecalho">
+      <h1 class="logo">StayOn</h1>
+      <p class="subtitulo">Gerenciamento de Rotas</p>
     </div>
 
-    <h3>Última mensagem recebida</h3>
-    <pre id="raw">—</pre>
+    <div class="area-principal">
+      <div class="grade-botoes">
+        <button class="botao-acao" onclick="abrirPopup('popup-iniciar')">
+          <span class="icone-botao">▶️</span>
+          <span>Iniciar Rota</span>
+        </button>
 
-    <h3>Enviar JSON para o ESP</h3>
-    <div class="row">
-      <button id="btnOn">Enviar {"led":1}</button>
-      <button id="btnOff">Enviar {"led":0}</button>
+        <button class="botao-acao" onclick="abrirPopup('popup-finalizar')">
+          <span class="icone-botao">⏹️</span>
+          <span>Finalizar Rota</span>
+        </button>
+
+        <button class="botao-acao" onclick="abrirPopup('popup-ver')">
+          <span class="icone-botao">📋</span>
+          <span>Ver Rotas</span>
+        </button>
+
+        <button class="botao-acao" onclick="abrirPopup('popup-atual')">
+          <span class="icone-botao">🗺️</span>
+          <span>Rota Atual</span>
+        </button>
+      </div>
     </div>
 
-    <p>Ou escreva seu próprio JSON:</p>
-    <textarea id="jsonInput" rows="5">
-{
-  "led": 1,
-  "mensagem": "olá, esp"
-}
-    </textarea>
-    <div style="margin-top:8px">
-      <button id="btnEnviarJson">Enviar JSON</button>
-      <span id="erroJson" style="color:#a00;margin-left:8px"></span>
+    <div class="fundo-escuro-popup" id="popup-iniciar">
+      <div class="janela-popup">
+        <h2>Iniciar Nova Rota</h2>
+        <p>Verificando conexão do dispositivo...</p>
+        <div class="status-dispositivos">
+          <div class="item-dispositivo desconectado" id="status-oculos">
+            <div class="nome-dispositivo">Óculos</div>
+            <div class="texto-status">Desconectado</div>
+          </div>
+        </div>
+        <div class="botoes-popup-container">
+          <button class="botao-do-popup" onclick="iniciarRota()">
+            Continuar
+          </button>
+        </div>
+      </div>
     </div>
-  </div>
-</body>
+
+    <div class="fundo-escuro-popup" id="popup-finalizar">
+      <div class="janela-popup">
+        <h2>Finalizar Rota</h2>
+        <div class="texto-confirmacao">
+          Tem certeza que quer finalizar a rota atual? Os dados serão salvos.
+        </div>
+        <div class="botoes-popup-container">
+          <button
+            class="botao-do-popup cancelar"
+            onclick="fecharPopup('popup-finalizar')"
+          >
+            Cancelar
+          </button>
+          <button class="botao-do-popup" onclick="finalizarRota()">
+            Sim, Finalizar
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="fundo-escuro-popup" id="popup-ver">
+      <div class="janela-popup">
+        <h2>Minhas Rotas</h2>
+        <div class="lista-de-rotas" id="lista-de-rotas">
+          <!-- Rotas serão injetadas aqui pelo JavaScript -->
+        </div>
+        <div class="botoes-popup-container">
+          <button class="botao-do-popup" onclick="fecharPopup('popup-ver')">
+            Fechar
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="fundo-escuro-popup" id="popup-atual">
+      <div class="janela-popup">
+        <h2>Rota em Andamento</h2>
+        <div class="info-da-rota-atual">
+          <div class="linha-dado">
+            <span class="label-dado">Tempo:</span>
+            <span class="valor-dado" id="tempo-rota">00:00:00</span>
+          </div>
+          <div class="linha-dado">
+            <span class="label-dado">Distância:</span>
+            <span class="valor-dado" id="distancia-rota">0.0 KM</span>
+          </div>
+          <div class="linha-dado">
+            <span class="label-dado">Velocidade:</span>
+            <span class="valor-dado" id="velocidade-rota">0.0 km/h</span>
+          </div>
+          <div class="linha-dado">
+            <span class="label-dado">Localização:</span>
+            <span class="valor-dado" id="localizacao-rota">Aguardando GPS...</span>
+          </div>
+          <div class="linha-dado">
+            <span class="label-dado">Latitude:</span>
+            <span class="valor-dado" id="latitude-rota">--</span>
+          </div>
+          <div class="linha-dado">
+            <span class="label-dado">Longitude:</span>
+            <span class="valor-dado" id="longitude-rota">--</span>
+          </div>
+
+          <div class="linha-dado">
+            <span class="label-dado">Alerta de Acidente:</span>
+            <span class="valor-dado" id="alerta-acidente">0</span>
+          </div>
+          <div class="linha-dado">
+            <span class="label-dado">Alerta de Sono:</span>
+            <span class="valor-dado" id="alerta-sono">0</span>
+          </div>
+        </div>
+        <div class="area-mapa">
+          <span>[ Simulação do Mapa ]</span>
+        </div>
+        <div class="botoes-popup-container">
+          <button class="botao-do-popup" onclick="fecharPopup('popup-atual')">
+            Fechar
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Novo Popup de Aviso -->
+    <div class="fundo-escuro-popup" id="popup-aviso">
+      <div class="janela-popup">
+        <h2>Atenção</h2>
+        <div class="texto-confirmacao" id="mensagem-aviso">
+          Você só pode acessar a Rota Atual quando iniciar uma rota.
+        </div>
+        <div class="botoes-popup-container">
+          <button class="botao-do-popup" onclick="fecharPopup('popup-aviso')">
+            Entendi
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Importa o script.js para conexão WebSocket -->
+    <script src="script.js"></script>
+
+    <script>
+      // Variáveis de Estado Global
+      let rotaEmAndamento = false
+      
+      // Variáveis de Dados Estáticos (FALLBACK - serão substituídos por dados do ESP32)
+      const DADOS_ESTATICOS = {
+        latitude: '-23.6664',
+        longitude: '-46.7831',
+        velocidade: '0',
+        localizacao: 'UNASP - São Paulo',
+        distanciaKM: '0.1'
+      }
+
+      let segundosDecorridos = 0
+      let cronometroInterval = null
+      let intervaloAtualizacao = null
+
+      // Chave do localStorage para armazenar rotas finalizadas
+      const STORAGE_KEY = 'stayon_rotas_finalizadas'
+
+      // ====================================================================
+      // FUNÇÕES DE UTILIDADE
+      // ====================================================================
+
+      function carregarRotas() {
+        const rotasJson = localStorage.getItem(STORAGE_KEY)
+        return rotasJson ? JSON.parse(rotasJson) : []
+      }
+
+      function salvarRota(novaRota) {
+        const rotas = carregarRotas()
+        rotas.unshift(novaRota)
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(rotas))
+      }
+
+      function formatarTempo(totalSeconds) {
+        const h = Math.floor(totalSeconds / 3600)
+        const m = Math.floor((totalSeconds % 3600) / 60)
+        const s = totalSeconds % 60
+        return [h, m, s].map((v) => String(v).padStart(2, '0')).join(':')
+      }
+
+      // ====================================================================
+      // FUNÇÕES DE POPUP
+      // ====================================================================
+
+      function abrirPopup(id) {
+        const popup = document.getElementById(id)
+        if (!popup) return
+
+        if (id === 'popup-atual' && !rotaEmAndamento) {
+          document.getElementById('mensagem-aviso').textContent =
+            'Você só pode acessar a Rota Atual quando iniciar uma rota.'
+          document.getElementById('popup-aviso').style.display = 'flex'
+          return
+        }
+
+        if (id === 'popup-ver') {
+          renderizarRotas()
+        }
+        
+        if (id === 'popup-iniciar') {
+          inicializarStatusDispositivos()
+        }
+
+        if (id === 'popup-atual' && rotaEmAndamento) {
+          iniciarCronometro()
+          atualizarInterfaceRotaEstatica()
+          iniciarAtualizacaoAutomatica()
+        }
+
+        popup.style.display = 'flex'
+      }
+
+      function fecharPopup(id) {
+        const popup = document.getElementById(id)
+        if (!popup) return
+
+        popup.style.display = 'none'
+
+        if (id === 'popup-atual') {
+          pararCronometro()
+          pararAtualizacaoAutomatica()
+        }
+      }
+
+      document.addEventListener('click', (evento) => {
+        if (evento.target.classList.contains('fundo-escuro-popup')) {
+          fecharPopup(evento.target.id)
+        }
+      })
+
+      document.querySelectorAll('.janela-popup').forEach((popup) => {
+        popup.addEventListener('click', (evento) => evento.stopPropagation())
+      })
+
+      // ====================================================================
+      // LÓGICA DA ROTA
+      // ====================================================================
+
+      function iniciarRota() {
+        if (rotaEmAndamento) {
+          alert('Uma rota já está em andamento. Finalize-a primeiro.')
+          return
+        }
+
+        // Verifica status do óculos através dos dados do ESP32
+        const oculosConectado = window.dadosEsp32 ? window.dadosEsp32.oculosConectado : false
+
+        if (!oculosConectado) {
+          alert('O óculos está desconectado. Por favor, conecte-o para iniciar a rota.')
+          return
+        }
+
+        rotaEmAndamento = true
+        segundosDecorridos = 0
+        
+        fecharPopup('popup-iniciar')
+        abrirPopup('popup-atual')
+        alert('Rota iniciada com sucesso!')
+      }
+
+      function finalizarRota() {
+        if (!rotaEmAndamento) {
+          alert('Nenhuma rota em andamento para finalizar.')
+          fecharPopup('popup-finalizar')
+          return
+        }
+
+        pararCronometro()
+        pararAtualizacaoAutomatica()
+
+        // Pega os dados do ESP32 se disponíveis
+        const alertasAcidente = window.dadosEsp32 ? window.dadosEsp32.alertasAcidente : 0
+        const alertasSono = window.dadosEsp32 ? window.dadosEsp32.alertasSono : 0
+
+        const rotaFinalizada = {
+          id: Date.now(),
+          data: new Date().toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }),
+          duracaoSegundos: segundosDecorridos,
+          duracaoFormatada: formatarTempo(segundosDecorridos),
+          distanciaKM: DADOS_ESTATICOS.distanciaKM,
+          alertasAcidente: alertasAcidente,
+          alertasSono: alertasSono,
+        }
+
+        salvarRota(rotaFinalizada)
+
+        rotaEmAndamento = false
+        segundosDecorridos = 0
+        
+        
+        fecharPopup('popup-finalizar')
+        fecharPopup('popup-atual')
+        
+        alert('Rota finalizada e salva com sucesso! Consulte "Ver Rotas".')
+      }
+
+      // ====================================================================
+      // INICIALIZAÇÃO DO STATUS DOS DISPOSITIVOS
+      // ====================================================================
+
+      function inicializarStatusDispositivos() {
+        // Pega o status do ESP32 se disponível
+        const oculosConectado = window.dadosEsp32 ? window.dadosEsp32.oculosConectado : false
+        const oculosElement = document.getElementById('status-oculos')
+        
+        if (oculosConectado) {
+          oculosElement.classList.remove('desconectado')
+          oculosElement.classList.add('conectado')
+          oculosElement.querySelector('.texto-status').textContent = 'Conectado'
+        } else {
+          oculosElement.classList.remove('conectado')
+          oculosElement.classList.add('desconectado')
+          oculosElement.querySelector('.texto-status').textContent = 'Desconectado'
+        }
+      }
+
+      // ====================================================================
+      // LÓGICA DO CRONÔMETRO
+      // ====================================================================
+
+      function iniciarCronometro() {
+        if (cronometroInterval) return
+
+        cronometroInterval = setInterval(() => {
+          segundosDecorridos++
+          document.getElementById('tempo-rota').textContent = formatarTempo(segundosDecorridos)
+        }, 1000)
+      }
+
+      function pararCronometro() {
+        clearInterval(cronometroInterval)
+        cronometroInterval = null
+      }
+
+      // ====================================================================
+      // ATUALIZAÇÃO DA INTERFACE COM DADOS DO ESP32
+      // ====================================================================
+
+      function atualizarInterfaceRotaEstatica() {
+        // Dados estáticos que não vêm do ESP32
+        document.getElementById('distancia-rota').textContent = DADOS_ESTATICOS.distanciaKM + ' KM'
+        document.getElementById('velocidade-rota').textContent = DADOS_ESTATICOS.velocidade + ' km/h'
+        document.getElementById('localizacao-rota').textContent = DADOS_ESTATICOS.localizacao
+        document.getElementById('latitude-rota').textContent = DADOS_ESTATICOS.latitude
+        document.getElementById('longitude-rota').textContent = DADOS_ESTATICOS.longitude
+        
+        // Dados dinâmicos do ESP32
+        if (window.dadosEsp32) {
+          document.getElementById('alerta-acidente').textContent = window.dadosEsp32.alertasAcidente
+          document.getElementById('alerta-sono').textContent = window.dadosEsp32.alertasSono
+        }
+      }
+
+      function iniciarAtualizacaoAutomatica() {
+        if (intervaloAtualizacao) return
+        
+        // Atualiza os alertas a cada 1 segundo enquanto a rota estiver aberta
+        intervaloAtualizacao = setInterval(() => {
+          if (window.dadosEsp32) {
+            document.getElementById('alerta-acidente').textContent = window.dadosEsp32.alertasAcidente
+            document.getElementById('alerta-sono').textContent = window.dadosEsp32.alertasSono
+          }
+        }, 1000)
+      }
+
+      function pararAtualizacaoAutomatica() {
+        clearInterval(intervaloAtualizacao)
+        intervaloAtualizacao = null
+      }
+
+      // ====================================================================
+      // LÓGICA DE EXIBIÇÃO DE ROTAS
+      // ====================================================================
+
+      function renderizarRotas() {
+        const listaRotasElement = document.getElementById('lista-de-rotas')
+        const rotas = carregarRotas()
+        
+        listaRotasElement.innerHTML = ''
+
+        if (rotas.length === 0) {
+          listaRotasElement.innerHTML = '<p style="text-align: center; color: #6c757d;">Nenhuma rota finalizada ainda.</p>'
+          return
+        }
+
+        rotas.forEach((rota, index) => {
+          const nomeRota = `Rota #${rotas.length - index} (${rota.data})`
+          const detalhes = `${rota.distanciaKM} KM • ${rota.duracaoFormatada} • Alertas: ${rota.alertasAcidente} Acidente(s), ${rota.alertasSono} Sono(s)`
+
+          const itemHtml = `
+            <div class="item-da-rota">
+              <div class="titulo-rota">${nomeRota}</div>
+              <div class="detalhes-da-rota">${detalhes}</div>
+            </div>
+          `
+          listaRotasElement.innerHTML += itemHtml
+        })
+      }
+      
+      document.addEventListener('DOMContentLoaded', renderizarRotas)
+
+    </script>
+  </body>
 </html>
